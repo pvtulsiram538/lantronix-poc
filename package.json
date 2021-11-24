@@ -1,0 +1,19 @@
+{
+  "name": "lantronix-poc",
+  "version": "1.0.0",
+  "description": "this is just for POC",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pvtulsiram538/lantronix-poc.git"
+  },
+  "author": "venkata tulsiram",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pvtulsiram538/lantronix-poc/issues"
+  },
+  "homepage": "https://github.com/pvtulsiram538/lantronix-poc#readme"
+}
