@@ -1,10 +1,10 @@
 import {Router} from 'express';
-import {userManagement} from './userManagementRoute';
+import {applyRegistration} from './userManagementRoute';
 
 
 
 export const applyRoutes = (router: Router) => {
-    userManagement(router);
+    applyRegistration(router);
     
     return router;
 };

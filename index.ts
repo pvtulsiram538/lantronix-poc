@@ -1,26 +1,80 @@
-import * as express from 'express';
-import * as bodyParser from 'body-parser';
-import { Router } from 'express';
-import { Application } from 'express';
-import {helmet} from 'helmet';
-import {applyRoutes} from './routes/applyRoutes';
+var cluster = require('cluster');
+var isMaster = cluster.isMaster;
+import { cpus } from 'os';
+import { app } from './app';
+import logger from "./utils/logger";
+import config from "./utils/config";
+import { dbClient } from "./database";
 
 
 
-const app: Application = express();
-const router: Router
-
-// mount json from the parser
-app.use(express.json());
-app.use(express.urlencoded({extended: false}));
-
-//to disable 'X-Powered-By: Express' header to avoid disclosure the app engine */
-app.use(helmet());
 
 
-app.use((request: express.Request, response: express.Response, next: express.NextFunction) => {
-    response.header('Access-Control-Allow-Origin', '*');
-    response.header('Access-Control-Allow-Headers', 'Content-type, Accept');
-    return next();
+/**
+ * Stores workers
+ * @type {Set}
+ */
+const workers: Set<any> = new Set();
+
+
+if (isMaster) {
+    startWorker();
+
+} else {
+
+    /**
+     * START the DB server
+     */
+    dbClient.init();
+    app.listen(config.SERVER_PORT, () => {
+
+        logger.info(`Magic happens on port `, config.SERVER_PORT);
+        console.log(`Magic happens on port `, config.SERVER_PORT);
+    })
+}
+
+function startWorker() {
+    const nofWorkers: Number = cpus().length;
+    logger.info(`Master cluster setting up workers`, nofWorkers);
+
+    for (let i = 0; i < nofWorkers; i++) {
+        const newWorker: any = cluster.fork();
+        const { process: { pid } } = newWorker;
+        workers.add(process.pid);
+
+    }
+    cluster.on('online', (worker: any) => {
+        logger.info(`worker  ${worker.process.pid} is online`);
+    });
+
+    cluster.on('exit', (deadworker: any, code: any, signal: any) => {
+
+        if (code !== 0 && !deadworker.exitedAfterDisConnect) {
+            logger.error(`worked killed---`, deadworker.process.pid);
+            delete workers[deadworker.process.pid];
+            let worker = cluster.fork();
+            logger.info(`starting new worker `, worker.process.pid);
+
+        } else {
+            logger.info(`worker killed forcefully`);
+        }
+
+    });
+}
+
+
+process.on('uncaughtException', (reason) => {
+    logger.error(`uncaught exception due to `, JSON.stringify(reason));
+    /**
+     * shutting down the master process
+     */
+    process.exit(1);
+
 });
-app.use('/',applyRoutes(router));
+
+process.on('unhandledRejection', (reason) => {
+    logger.error('unhandledRejections   ', JSON.stringify(reason));
+
+});
+
+
