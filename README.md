@@ -9,7 +9,7 @@ npm install
 2. Run Server
 
 ```bash
-node server.js
+npm start
 ```
 
 ## API details
