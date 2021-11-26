@@ -5,6 +5,7 @@
 
 ```bash
 npm install
+npm install -g typescript
 ```
 2. Run Server
 
